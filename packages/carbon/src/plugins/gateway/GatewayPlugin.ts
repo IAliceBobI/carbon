@@ -102,13 +102,30 @@ export class GatewayPlugin extends Plugin {
 
 		if (!this.gatewayInfo) {
 			try {
+				// Import proxy utilities for REST API calls
+				const { getProxyUrl, createProxyAgent } = await import(
+					"../../utils/proxy.js"
+				)
+
+				const proxyUrl = getProxyUrl(this.options.proxyUrl)
+				const fetchOptions: RequestInit = {
+					headers: {
+						Authorization: `Bot ${client.options.token}`
+					}
+				}
+
+				// Add dispatcher if proxy is configured for HTTP/HTTPS proxies
+				if (proxyUrl && !proxyUrl.startsWith("socks")) {
+					const proxyAgent = await createProxyAgent(proxyUrl)
+					if (proxyAgent?.dispatcher) {
+						// @ts-expect-error - dispatcher is not in standard RequestInit but supported by undici
+						fetchOptions.dispatcher = proxyAgent.dispatcher
+					}
+				}
+
 				const response = await fetch(
 					"https://discord.com/api/v10/gateway/bot",
-					{
-						headers: {
-							Authorization: `Bot ${client.options.token}`
-						}
-					}
+					fetchOptions
 				)
 				this.gatewayInfo = (await response.json()) as APIGatewayBotInfo
 			} catch (error) {
