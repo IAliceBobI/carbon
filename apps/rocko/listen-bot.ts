@@ -1,6 +1,6 @@
 import "dotenv/config"
 import {
-	type Client,
+	Client,
 	type ListenerEventData,
 	MessageCreateListener,
 	ReadyListener

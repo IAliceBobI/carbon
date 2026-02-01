@@ -2,6 +2,7 @@ import "dotenv/config"
 import { Client } from "carbon-proxy"
 import { createServer } from "carbon-proxy/adapters/node"
 import { CommandDataPlugin } from "carbon-proxy/command-data"
+import { GatewayPlugin, GatewayIntents } from "carbon-proxy/gateway"
 import {
 	ApplicationRoleConnectionMetadataType,
 	LinkedRoles
@@ -35,6 +36,15 @@ import UserCommand from "./commands/testing/user_command.js"
 import { ApplicationAuthorized } from "./events/authorized.js"
 import { MessageCreate } from "./events/messageCreate.js"
 import { Ready } from "./events/ready.js"
+
+// 创建 Gateway 插件，配置 intents 以接收所有消息
+const gateway = new GatewayPlugin({
+	proxyUrl: process.env.DISCORD_SOCKS_PROXY, // 可选：SOCKS5H 代理
+	intents:
+		GatewayIntents.Guilds |
+		GatewayIntents.GuildMessages |
+		GatewayIntents.MessageContent // 接收消息内容（不需要@bot）
+})
 
 const linkedRoles = new LinkedRoles({
 	metadata: [
@@ -99,7 +109,7 @@ const client = new Client(
 		],
 		listeners: [new ApplicationAuthorized(), new Ready(), new MessageCreate()]
 	},
-	[linkedRoles, new CommandDataPlugin()]
+	[linkedRoles, new CommandDataPlugin(), gateway]
 )
 
 console.log(
@@ -121,6 +131,7 @@ declare global {
 			DISCORD_CLIENT_SECRET: string
 			DISCORD_PUBLIC_KEY: string
 			DISCORD_BOT_TOKEN: string
+			DISCORD_SOCKS_PROXY?: string // 可选：SOCKS5H 代理地址
 			FORWARDER_PUBLIC_KEY: string // Receiving from pointo
 		}
 	}
