@@ -119,12 +119,37 @@ export class RequestClient {
 
 	/**
 	 * Initialize proxy dispatcher lazily (async)
+	 * For SOCKS proxies, fallback to HTTP proxy for REST API calls
 	 */
 	private async initializeProxy() {
 		if (this.proxyUrl && !this.proxyDispatcher) {
 			const proxyAgent = await createProxyAgent(this.proxyUrl)
-			if (proxyAgent) {
+			if (proxyAgent?.dispatcher) {
+				// HTTP/HTTPS proxy has dispatcher
 				this.proxyDispatcher = proxyAgent.dispatcher
+			} else if (proxyAgent?.agent && this.proxyUrl?.startsWith("socks")) {
+				// SOCKS proxy detected (dispatcher is null)
+				// Try to fallback to HTTP proxy for REST API
+				const httpProxyUrl =
+					process.env.DISCORD_HTTP_PROXY ||
+					process.env.HTTPS_PROXY ||
+					process.env.HTTP_PROXY ||
+					process.env.ALL_PROXY
+
+				if (httpProxyUrl && !httpProxyUrl.startsWith("socks")) {
+					// Found HTTP proxy, use it as fallback
+					console.log(
+						`[Carbon] SOCKS proxy detected, using HTTP proxy fallback for REST API: ${httpProxyUrl}`
+					)
+					const httpProxyAgent = await createProxyAgent(httpProxyUrl)
+					if (httpProxyAgent?.dispatcher) {
+						this.proxyDispatcher = httpProxyAgent.dispatcher
+					}
+				} else {
+					console.warn(
+						`[Carbon] SOCKS proxy configured but no HTTP proxy available for REST API. REST calls may fail.`
+					)
+				}
 			}
 		}
 	}
