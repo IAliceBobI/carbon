@@ -2,7 +2,7 @@ import "dotenv/config"
 import { Client } from "carbon-proxy"
 import { createServer } from "carbon-proxy/adapters/node"
 import { CommandDataPlugin } from "carbon-proxy/command-data"
-import { GatewayPlugin, GatewayIntents } from "carbon-proxy/gateway"
+import { GatewayIntents, GatewayPlugin } from "carbon-proxy/gateway"
 import {
 	ApplicationRoleConnectionMetadataType,
 	LinkedRoles
