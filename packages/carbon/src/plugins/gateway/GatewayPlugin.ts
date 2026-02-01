@@ -120,6 +120,7 @@ export class GatewayPlugin extends Plugin {
 				if (proxyUrl?.startsWith("socks")) {
 					// SOCKS doesn't work with fetch, try HTTP_PROXY fallback
 					const httpProxy =
+						process.env.DISCORD_HTTP_PROXY ||
 						process.env.HTTP_PROXY ||
 						process.env.HTTPS_PROXY ||
 						process.env.http_proxy ||
