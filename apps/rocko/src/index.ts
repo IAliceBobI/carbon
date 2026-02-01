@@ -1,11 +1,11 @@
 import "dotenv/config"
-import { Client } from "@buape/carbon"
-import { createServer } from "@buape/carbon/adapters/node"
-import { CommandDataPlugin } from "@buape/carbon/command-data"
+import { Client } from "carbon-proxy"
+import { createServer } from "carbon-proxy/adapters/node"
+import { CommandDataPlugin } from "carbon-proxy/command-data"
 import {
 	ApplicationRoleConnectionMetadataType,
 	LinkedRoles
-} from "@buape/carbon/linked-roles"
+} from "carbon-proxy/linked-roles"
 import PingCommand from "./commands/ping.js"
 import MentionsCommand from "./commands/testing/allow_mentions.js"
 import AskCommand from "./commands/testing/ask.js"
@@ -34,6 +34,7 @@ import SubcommandGroupsCommand from "./commands/testing/subcommandgroup.js"
 import UserCommand from "./commands/testing/user_command.js"
 import { ApplicationAuthorized } from "./events/authorized.js"
 import { MessageCreate } from "./events/messageCreate.js"
+import { Ready } from "./events/ready.js"
 
 const linkedRoles = new LinkedRoles({
 	metadata: [
@@ -96,7 +97,7 @@ const client = new Client(
 			new EphemeralShorthandCommand(),
 			new ScheduledEventCommand()
 		],
-		listeners: [new ApplicationAuthorized(), new MessageCreate()]
+		listeners: [new ApplicationAuthorized(), new Ready(), new MessageCreate()]
 	},
 	[linkedRoles, new CommandDataPlugin()]
 )
