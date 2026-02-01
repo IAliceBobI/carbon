@@ -114,9 +114,23 @@ export class GatewayPlugin extends Plugin {
 					}
 				}
 
-				// Add dispatcher if proxy is configured for HTTP/HTTPS proxies
-				if (proxyUrl && !proxyUrl.startsWith("socks")) {
-					const proxyAgent = await createProxyAgent(proxyUrl)
+				// Add dispatcher if proxy is configured
+				// For SOCKS proxies, try to use HTTP_PROXY for REST API calls
+				let effectiveProxyUrl = proxyUrl
+				if (proxyUrl?.startsWith("socks")) {
+					// SOCKS doesn't work with fetch, try HTTP_PROXY fallback
+					const httpProxy =
+						process.env.HTTP_PROXY ||
+						process.env.HTTPS_PROXY ||
+						process.env.http_proxy ||
+						process.env.https_proxy
+					if (httpProxy && !httpProxy.startsWith("socks")) {
+						effectiveProxyUrl = httpProxy
+					}
+				}
+
+				if (effectiveProxyUrl && !effectiveProxyUrl.startsWith("socks")) {
+					const proxyAgent = await createProxyAgent(effectiveProxyUrl)
 					if (proxyAgent?.dispatcher) {
 						// @ts-expect-error - dispatcher is not in standard RequestInit but supported by undici
 						fetchOptions.dispatcher = proxyAgent.dispatcher
