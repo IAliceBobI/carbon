@@ -1,0 +1,12 @@
+{
+	"mcpServers": {
+		"browser-mcp": {
+			"command": "npx",
+			"args": ["mcp-remote", "http://127.0.0.1:9106/mcp"]
+		},
+		"context7": {
+			"command": "npx",
+			"args": ["-y", "@iflow-mcp/context7-mcp@1.0.0"]
+		}
+	}
+}

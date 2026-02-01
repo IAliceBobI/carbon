@@ -9,7 +9,7 @@
 		"wrangler": "wrangler"
 	},
 	"dependencies": {
-		"@buape/carbon": "workspace:*"
+		"carbon-proxy": "workspace:*"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "4.20260120.0",
