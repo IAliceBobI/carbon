@@ -1,4 +1,4 @@
-.PHONY: help publish-all publish-carbon publish-create-carbon build-carbon build-create-carbon
+.PHONY: help publish-all publish-carbon publish-create-carbon build-carbon build-create-carbon bot-simple bot-test
 
 # 默认目标
 help:
@@ -9,6 +9,8 @@ help:
 	@echo "  make publish-create-carbon  - Build and publish create-carbon"
 	@echo "  make build-carbon           - Build carbon-proxy only"
 	@echo "  make build-create-carbon    - Build create-carbon only"
+	@echo "  make bot-simple             - Run simple message listener bot"
+	@echo "  make bot-test               - Run message listener test script"
 
 # 构建所有包
 build-all: build-carbon build-create-carbon
@@ -43,3 +45,19 @@ build-create-carbon:
 	@echo "=> Building create-carbon..."
 	cd packages/create-carbon && pnpm build
 	@echo "✓ create-carbon built successfully"
+
+# 运行简化版消息监听 bot
+bot-simple:
+	@echo "=> Starting simple message listener bot..."
+	@echo "=> Using SOCKS5H proxy: $${DISCORD_SOCKS_PROXY:-未设置}"
+	@echo "=> Bot ID: $${DISCORD_CLIENT_ID:-未设置}"
+	@echo ""
+	cd apps/rocko && npx tsx simple-listen-bot.ts
+
+# 运行消息监听测试脚本
+bot-test:
+	@echo "=> Starting message listener test..."
+	@echo "=> Using SOCKS5H proxy: $${DISCORD_SOCKS_PROXY:-未设置}"
+	@echo "=> Bot ID: $${DISCORD_CLIENT_ID:-未设置}"
+	@echo ""
+	cd apps/rocko && node test-message-listener.mjs
