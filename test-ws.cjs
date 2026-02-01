@@ -6,7 +6,7 @@ const proxy = process.env.DISCORD_HTTP_PROXY
 
 console.log("🔍 测试 WebSocket 代理连接到 Discord Gateway...")
 console.log("📡 代理:", proxy)
-console.log("🔑 Token:", token?.substring(0, 20) + "...")
+console.log("🔑 Token:", `${token?.substring(0, 20)}...`)
 
 if (!token) {
 	console.error("❌ DISCORD_BOT_TOKEN 环境变量未设置")
@@ -52,7 +52,7 @@ ws.on("message", (data) => {
 	msgCount++
 	const payload = JSON.parse(data)
 	console.log(
-		"📥 消息 #" + msgCount,
+		`📥 消息 #${msgCount}`,
 		"- op:",
 		payload.op,
 		"t:",
@@ -73,7 +73,7 @@ ws.on("message", (data) => {
 		console.log("🎉 连接就绪！")
 		console.log(
 			"👤 用户:",
-			payload.d.user?.username + "#" + payload.d.user?.discriminator
+			`${payload.d.user?.username}#${payload.d.user?.discriminator}`
 		)
 		console.log("🏠 服务器数量:", payload.d.guilds?.length)
 		setTimeout(() => {

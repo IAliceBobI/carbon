@@ -7,7 +7,7 @@ const proxy = process.env.DISCORD_HTTP_PROXY
 
 console.log("🔍 测试 WebSocket 代理连接...")
 console.log("📡 代理:", proxy)
-console.log("🔑 Token:", token?.substring(0, 20) + "...")
+console.log("🔑 Token:", `${token?.substring(0, 20)}...`)
 
 const gatewayUrl = "wss://gateway.discord.gg/?v=10&encoding=json"
 const options = {}
@@ -24,7 +24,7 @@ const start = Date.now()
 
 ws.on("open", () => {
 	const time = Date.now() - start
-	console.log("✅ 连接成功！用时:", time + "ms")
+	console.log("✅ 连接成功！用时:", `${time}ms`)
 
 	const payload = {
 		op: 2,
@@ -46,13 +46,13 @@ ws.on("open", () => {
 ws.on("message", (data) => {
 	msgCount++
 	const payload = JSON.parse(data)
-	console.log("📥 消息 #" + msgCount, {
+	console.log(`📥 消息 #${msgCount}`, {
 		op: payload.op,
 		t: payload.t || "UNKNOWN"
 	})
 
 	if (payload.op === 10) {
-		console.log("✅ Hello - 心跳:", payload.d.heartbeat_interval + "ms")
+		console.log("✅ Hello - 心跳:", `${payload.d.heartbeat_interval}ms`)
 		ws.send(JSON.stringify({ op: 1, d: null }))
 	}
 
@@ -64,7 +64,7 @@ ws.on("message", (data) => {
 		console.log("🎉 READY!")
 		console.log(
 			"👤 用户:",
-			payload.d.user?.username + "#" + payload.d.user?.discriminator
+			`${payload.d.user?.username}#${payload.d.user?.discriminator}`
 		)
 		console.log("🏠 服务器:", payload.d.guilds?.length)
 		setTimeout(() => {

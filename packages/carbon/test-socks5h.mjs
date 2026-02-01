@@ -32,7 +32,7 @@ ws.on("error", (err) => {
 	process.exit(1)
 })
 
-ws.on("close", (code, reason) => {
+ws.on("close", (code, _reason) => {
 	console.log(`\n关闭 - code: ${code}`)
 	if (code === 1000) {
 		console.log("\n✅ 测试成功！")

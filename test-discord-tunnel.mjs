@@ -79,7 +79,7 @@ try {
 					console.log(`  → Bot is ready!`)
 				}
 			}
-		} catch (err) {
+		} catch (_err) {
 			// Ignore parse errors for non-JSON messages
 		}
 	})

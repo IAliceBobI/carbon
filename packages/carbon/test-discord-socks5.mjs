@@ -65,7 +65,7 @@ try {
 
 		const opName = getOpName(payload.op)
 		console.log(
-			`📥 [#${messageCount}] op:${payload.op} (${opName}) ${payload.t ? "| t:" + payload.t : ""}`
+			`📥 [#${messageCount}] op:${payload.op} (${opName}) ${payload.t ? `| t:${payload.t}` : ""}`
 		)
 
 		// op: 10 = Hello
