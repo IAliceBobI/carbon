@@ -11,10 +11,27 @@ function parseProxyUrl(proxyUrl: string): ProxyConfig | null {
 		const url = new URL(proxyUrl)
 		const protocol = url.protocol.replace(":", "")
 
-		if (["http", "https", "socks", "socks5", "socks5h", "socks4", "socks4a"].includes(protocol)) {
+		if (
+			[
+				"http",
+				"https",
+				"socks",
+				"socks5",
+				"socks5h",
+				"socks4",
+				"socks4a"
+			].includes(protocol)
+		) {
 			return {
 				url: proxyUrl,
-				type: protocol as "http" | "https" | "socks" | "socks5" | "socks5h" | "socks4" | "socks4a"
+				type: protocol as
+					| "http"
+					| "https"
+					| "socks"
+					| "socks5"
+					| "socks5h"
+					| "socks4"
+					| "socks4a"
 			}
 		}
 

@@ -27,6 +27,7 @@ import PaginatorCommand from "./commands/testing/paginator.js"
 import PermissionCommand from "./commands/testing/permissions.js"
 import PollCommand from "./commands/testing/poll.js"
 import PrecheckCommand from "./commands/testing/precheck.js"
+import RandomCommand from "./commands/testing/random.js"
 import ScheduledEventCommand from "./commands/testing/scheduled_events.js"
 import SubcommandsCommand from "./commands/testing/subcommand.js"
 import SubcommandGroupsCommand from "./commands/testing/subcommandgroup.js"
@@ -90,6 +91,7 @@ const client = new Client(
 			new ConfirmCommand(),
 			new PollCommand(),
 			new AskCommand(),
+			new RandomCommand(),
 			new EmojiCommand(),
 			new EphemeralShorthandCommand(),
 			new ScheduledEventCommand()

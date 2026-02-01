@@ -1,9 +1,9 @@
 import type { APIGatewayBotInfo } from "discord-api-types/v10"
 import { Plugin } from "../../abstracts/Plugin.js"
 import type { Client } from "../../classes/Client.js"
+import { createProxyAgent, getProxyUrl } from "../../utils/proxy.js"
 import { GatewayPlugin } from "../gateway/GatewayPlugin.js"
 import type { GatewayPluginOptions } from "../gateway/types.js"
-import { createProxyAgent, getProxyUrl } from "../../utils/proxy.js"
 
 export interface ShardingPluginOptions
 	extends Omit<GatewayPluginOptions, "shard"> {
