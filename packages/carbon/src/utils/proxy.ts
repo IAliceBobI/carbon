@@ -3,7 +3,7 @@
  */
 interface ProxyConfig {
 	url: string
-	type: "http" | "https" | "socks" | "socks5" | "socks4"
+	type: "http" | "https" | "socks" | "socks5" | "socks5h" | "socks4" | "socks4a"
 }
 
 function parseProxyUrl(proxyUrl: string): ProxyConfig | null {
@@ -11,10 +11,10 @@ function parseProxyUrl(proxyUrl: string): ProxyConfig | null {
 		const url = new URL(proxyUrl)
 		const protocol = url.protocol.replace(":", "")
 
-		if (["http", "https", "socks", "socks5", "socks4"].includes(protocol)) {
+		if (["http", "https", "socks", "socks5", "socks5h", "socks4", "socks4a"].includes(protocol)) {
 			return {
 				url: proxyUrl,
-				type: protocol as "http" | "https" | "socks" | "socks5" | "socks4"
+				type: protocol as "http" | "https" | "socks" | "socks5" | "socks5h" | "socks4" | "socks4a"
 			}
 		}
 
@@ -29,8 +29,9 @@ function parseProxyUrl(proxyUrl: string): ProxyConfig | null {
  *
  * Priority:
  * 1. configuredProxy (passed directly)
- * 2. DISCORD_HTTP_PROXY environment variable
- * 3. HTTP_PROXY / HTTPS_PROXY environment variables (fallback)
+ * 2. DISCORD_SOCKS_PROXY environment variable (for SOCKS proxies)
+ * 3. DISCORD_HTTP_PROXY environment variable (for HTTP/HTTPS proxies)
+ * 4. HTTP_PROXY / HTTPS_PROXY environment variables (fallback)
  *
  * @param configuredProxy - Proxy URL from options
  * @returns Proxy URL string or null if no proxy is configured
@@ -41,13 +42,19 @@ export function getProxyUrl(configuredProxy?: string): string | null {
 		return configuredProxy
 	}
 
-	// 2. Check Discord-specific proxy environment variable
+	// 2. Check Discord-specific SOCKS proxy environment variable
+	const discordSocksProxy = process.env.DISCORD_SOCKS_PROXY
+	if (discordSocksProxy) {
+		return discordSocksProxy
+	}
+
+	// 3. Check Discord-specific HTTP proxy environment variable
 	const discordProxy = process.env.DISCORD_HTTP_PROXY
 	if (discordProxy) {
 		return discordProxy
 	}
 
-	// 3. Fall back to generic proxy variables
+	// 4. Fall back to generic proxy variables
 	const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy
 	if (httpsProxy) {
 		return httpsProxy
@@ -58,7 +65,7 @@ export function getProxyUrl(configuredProxy?: string): string | null {
 		return httpProxy
 	}
 
-	// 4. Check ALL_PROXY (supports SOCKS)
+	// 5. Check ALL_PROXY (supports SOCKS)
 	const allProxy = process.env.ALL_PROXY || process.env.all_proxy
 	if (allProxy) {
 		return allProxy
@@ -73,6 +80,13 @@ export function getProxyUrl(configuredProxy?: string): string | null {
  * Supports:
  * - HTTP/HTTPS proxies via undici's ProxyAgent
  * - SOCKS4/5 proxies via socks-proxy-agent (for WebSocket)
+ * - SOCKS5H/SOCKS4A proxies with remote DNS resolution (avoids DNS pollution)
+ *
+ * Protocol suffixes:
+ * - socks5:// - Local DNS resolution (default)
+ * - socks5h:// - Remote DNS resolution via proxy (recommended for DNS pollution issues)
+ * - socks4:// - SOCKS4 with local DNS
+ * - socks4a:// - SOCKS4A with remote DNS
  *
  * @param proxyUrl - The proxy URL to create an agent for
  * @returns Proxy agent instance or null if not supported
@@ -116,7 +130,10 @@ export async function createProxyAgent(
 				// Use SOCKS proxy agent
 				try {
 					const { SocksProxyAgent } = await import("socks-proxy-agent")
-					const agent = new SocksProxyAgent(parsed.url)
+					// Add timeout configuration to prevent hanging connections
+					const agent = new SocksProxyAgent(parsed.url, {
+						timeout: 30000 // 30 second timeout
+					})
 					console.log(`[Carbon] Using SOCKS proxy: ${parsed.url}`)
 					// Return both agent and dispatcher for compatibility
 					// - agent: for ws library (WebSocket)

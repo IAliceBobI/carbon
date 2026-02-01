@@ -3,6 +3,7 @@ import { Plugin } from "../../abstracts/Plugin.js"
 import type { Client } from "../../classes/Client.js"
 import { GatewayPlugin } from "../gateway/GatewayPlugin.js"
 import type { GatewayPluginOptions } from "../gateway/types.js"
+import { createProxyAgent, getProxyUrl } from "../../utils/proxy.js"
 
 export interface ShardingPluginOptions
 	extends Omit<GatewayPluginOptions, "shard"> {
@@ -18,6 +19,12 @@ export interface ShardingPluginOptions
 	 * Maximum number of shards to spawn concurrently
 	 */
 	maxConcurrency?: number
+	/**
+	 * Proxy URL for both WebSocket connections and REST API calls.
+	 * If not specified, will check DISCORD_SOCKS_PROXY, DISCORD_HTTP_PROXY,
+	 * then HTTP_PROXY/HTTPS_PROXY environment variables.
+	 */
+	proxyUrl?: string
 }
 
 export class ShardingPlugin extends Plugin {
@@ -52,13 +59,41 @@ export class ShardingPlugin extends Plugin {
 		// If totalShards not provided, get recommended amount from Discord
 		if (!this.config.totalShards) {
 			try {
+				// Import proxy utilities for REST API calls
+				const proxyUrl = getProxyUrl(this.config.proxyUrl)
+				const fetchOptions: RequestInit = {
+					headers: {
+						Authorization: `Bot ${client.options.token}`
+					}
+				}
+
+				// Add dispatcher if proxy is configured
+				// For SOCKS proxies, try to use HTTP_PROXY for REST API calls
+				let effectiveProxyUrl = proxyUrl
+				if (proxyUrl?.startsWith("socks")) {
+					// SOCKS doesn't work with fetch, try HTTP_PROXY fallback
+					const httpProxy =
+						process.env.DISCORD_HTTP_PROXY ||
+						process.env.HTTP_PROXY ||
+						process.env.HTTPS_PROXY ||
+						process.env.http_proxy ||
+						process.env.https_proxy
+					if (httpProxy && !httpProxy.startsWith("socks")) {
+						effectiveProxyUrl = httpProxy
+					}
+				}
+
+				if (effectiveProxyUrl && !effectiveProxyUrl.startsWith("socks")) {
+					const proxyAgent = await createProxyAgent(effectiveProxyUrl)
+					if (proxyAgent?.dispatcher) {
+						// @ts-expect-error - dispatcher is not in standard RequestInit but supported by undici
+						fetchOptions.dispatcher = proxyAgent.dispatcher
+					}
+				}
+
 				const response = await fetch(
 					"https://discord.com/api/v10/gateway/bot",
-					{
-						headers: {
-							Authorization: `Bot ${client.options.token}`
-						}
-					}
+					fetchOptions
 				)
 				const gatewayInfo = (await response.json()) as APIGatewayBotInfo
 				this.config.totalShards = gatewayInfo.shards
