@@ -148,10 +148,15 @@ export async function createProxyAgent(
 				try {
 					const { SocksProxyAgent } = await import("socks-proxy-agent")
 					// Add timeout configuration to prevent hanging connections
+					// Use environment variable or default to 60 seconds for slow proxies
+					const proxyTimeout =
+						Number(process.env.DISCORD_PROXY_TIMEOUT) || 60000
 					const agent = new SocksProxyAgent(parsed.url, {
-						timeout: 30000 // 30 second timeout
+						timeout: proxyTimeout
 					})
-					console.log(`[Carbon] Using SOCKS proxy: ${parsed.url}`)
+					console.log(
+						`[Carbon] Using SOCKS proxy: ${parsed.url} (timeout: ${proxyTimeout}ms)`
+					)
 					// Return both agent and dispatcher for compatibility
 					// - agent: for ws library (WebSocket)
 					// - dispatcher: for undici fetch API (may not work with legacy agents)
