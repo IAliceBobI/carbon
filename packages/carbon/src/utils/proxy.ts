@@ -71,15 +71,15 @@ export function getProxyUrl(configuredProxy?: string): string | null {
  * Create a proxy agent for the current runtime
  *
  * Supports:
- * - HTTP/HTTPS proxies via https-proxy-agent
- * - SOCKS4/5 proxies via socks-proxy-agent
+ * - HTTP/HTTPS proxies via undici's ProxyAgent
+ * - SOCKS4/5 proxies via socks-proxy-agent (for WebSocket)
  *
  * @param proxyUrl - The proxy URL to create an agent for
  * @returns Proxy agent instance or null if not supported
  */
-export function createProxyAgent(
+export async function createProxyAgent(
 	proxyUrl: string
-): { agent: unknown; dispatcher: unknown } | null {
+): Promise<{ agent: unknown; dispatcher: unknown } | null> {
 	// Validate proxy URL format
 	if (!proxyUrl || typeof proxyUrl !== "string") {
 		return null
@@ -94,15 +94,34 @@ export function createProxyAgent(
 	try {
 		// Check if we're in a Node.js environment
 		if (typeof process !== "undefined" && process.versions?.node) {
-			let Agent: new (url: string) => { agent: unknown; dispatcher: unknown }
+			// Try to use undici's ProxyAgent for HTTP/HTTPS proxies
+			if (!parsed.type.startsWith("socks")) {
+				try {
+					// Use undici's built-in ProxyAgent with dynamic import
+					const { ProxyAgent } = await import("undici")
+					const dispatcher = new ProxyAgent(parsed.url)
+					console.log(`[Carbon] Using HTTP proxy: ${parsed.url}`)
+					// Return both agent and dispatcher for compatibility
+					// - agent: for ws library (WebSocket) - will be created from https-proxy-agent if needed
+					// - dispatcher: for undici fetch API
+					return { agent: null, dispatcher }
+				} catch (err) {
+					// Undici ProxyAgent not available, fall back to https-proxy-agent
+					console.warn(`[Carbon] Undici ProxyAgent failed: ${err}`)
+				}
+			}
 
-			// Select appropriate agent based on proxy type
+			// For SOCKS proxies or fallback, use socks-proxy-agent or https-proxy-agent
 			if (parsed.type.startsWith("socks")) {
 				// Use SOCKS proxy agent
 				try {
-					const SocksProxyAgent = require("socks-proxy-agent")
-					Agent = SocksProxyAgent.SocksProxyAgent
+					const { SocksProxyAgent } = await import("socks-proxy-agent")
+					const agent = new SocksProxyAgent(parsed.url)
 					console.log(`[Carbon] Using SOCKS proxy: ${parsed.url}`)
+					// Return both agent and dispatcher for compatibility
+					// - agent: for ws library (WebSocket)
+					// - dispatcher: for undici fetch API (may not work with legacy agents)
+					return { agent, dispatcher: null }
 				} catch (_err) {
 					console.warn(
 						`[Carbon] SOCKS proxy requested but socks-proxy-agent not installed. Run: npm install socks-proxy-agent`
@@ -110,11 +129,15 @@ export function createProxyAgent(
 					return null
 				}
 			} else {
-				// Use HTTP/HTTPS proxy agent
+				// Use HTTP/HTTPS proxy agent as fallback
 				try {
-					const HttpsProxyAgent = require("https-proxy-agent")
-					Agent = HttpsProxyAgent.HttpsProxyAgent
-					console.log(`[Carbon] Using HTTP proxy: ${parsed.url}`)
+					const { HttpsProxyAgent } = await import("https-proxy-agent")
+					const agent = new HttpsProxyAgent(parsed.url)
+					console.log(`[Carbon] Using HTTP proxy (legacy): ${parsed.url}`)
+					// Return both agent and dispatcher for compatibility
+					// - agent: for ws library (WebSocket)
+					// - dispatcher: for undici fetch API (may not work with legacy agents)
+					return { agent, dispatcher: null }
 				} catch (_err) {
 					console.warn(
 						`[Carbon] HTTP proxy requested but https-proxy-agent not installed. Run: npm install https-proxy-agent`
@@ -122,12 +145,6 @@ export function createProxyAgent(
 					return null
 				}
 			}
-
-			const agent = new Agent(parsed.url)
-			// Return both agent and dispatcher for compatibility
-			// - agent: for ws library (WebSocket)
-			// - dispatcher: for undici fetch API
-			return { agent, dispatcher: agent }
 		}
 	} catch (err) {
 		// Log error for debugging

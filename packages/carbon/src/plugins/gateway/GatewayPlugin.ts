@@ -131,7 +131,7 @@ export class GatewayPlugin extends Plugin {
 		this.connect()
 	}
 
-	public connect(resume = false): void {
+	public async connect(resume = false): Promise<void> {
 		if (this.isConnecting) return
 		if (this.reconnectTimeout) {
 			clearTimeout(this.reconnectTimeout)
@@ -147,7 +147,7 @@ export class GatewayPlugin extends Plugin {
 					this.options.url ??
 					"wss://gateway.discord.gg/")
 		const url = this.ensureGatewayParams(baseUrl)
-		this.ws = this.createWebSocket(url)
+		this.ws = await this.createWebSocket(url)
 		this.isConnecting = true
 		this.setupWebSocket()
 	}
@@ -166,7 +166,7 @@ export class GatewayPlugin extends Plugin {
 		this.pings = []
 	}
 
-	protected createWebSocket(url: string): WebSocket {
+	protected async createWebSocket(url: string): Promise<WebSocket> {
 		if (!url) {
 			throw new Error("Gateway URL is required")
 		}
@@ -174,7 +174,7 @@ export class GatewayPlugin extends Plugin {
 		// Check for proxy configuration
 		const proxyUrl = getProxyUrl(this.options.proxyUrl)
 		if (proxyUrl) {
-			const proxyAgent = createProxyAgent(proxyUrl)
+			const proxyAgent = await createProxyAgent(proxyUrl)
 			if (proxyAgent?.agent) {
 				// Use proxy agent for WebSocket connection
 				// biome-ignore lint/suspicious/noExplicitAny: ws library agent option

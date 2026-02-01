@@ -46,5 +46,8 @@
 	"packageManager": "pnpm@10.24.0",
 	"engines": {
 		"node": ">=20"
+	},
+	"dependencies": {
+		"socks-proxy-agent": "^8.0.5"
 	}
 }

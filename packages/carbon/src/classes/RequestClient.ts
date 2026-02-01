@@ -104,6 +104,7 @@ export class RequestClient {
 	> = new Map()
 	private globalRateLimitUntil = 0
 	private proxyDispatcher: unknown | null = null
+	private proxyUrl: string | null = null
 
 	constructor(token: string, options?: RequestClientOptions) {
 		this.token = token
@@ -112,10 +113,16 @@ export class RequestClient {
 			...options
 		}
 
-		// Initialize proxy support
-		const proxyUrl = getProxyUrl(this.options.proxyUrl)
-		if (proxyUrl) {
-			const proxyAgent = createProxyAgent(proxyUrl)
+		// Store proxy URL for lazy initialization
+		this.proxyUrl = getProxyUrl(this.options.proxyUrl)
+	}
+
+	/**
+	 * Initialize proxy dispatcher lazily (async)
+	 */
+	private async initializeProxy() {
+		if (this.proxyUrl && !this.proxyDispatcher) {
+			const proxyAgent = await createProxyAgent(this.proxyUrl)
 			if (proxyAgent) {
 				this.proxyDispatcher = proxyAgent.dispatcher
 			}
@@ -155,6 +162,9 @@ export class RequestClient {
 		path: string,
 		{ data, query }: { data?: RequestData; query?: QueuedRequest["query"] }
 	): Promise<unknown> {
+		// Initialize proxy on first request
+		await this.initializeProxy()
+
 		const routeKey = this.getRouteKey(method, path)
 		if (this.options.queueRequests) {
 			if (

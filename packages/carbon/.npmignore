@@ -1,0 +1,36 @@
+# Source files (we publish dist/)
+src/
+*.ts
+!*.d.ts
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Development files
+.vscode/
+.idea/
+*.log
+
+# Test files
+test-*.mjs
+test-*.js
+*.test.ts
+*.test.js
+
+# Documentation (except README)
+*.md
+!README.md
+
+# CI/CD
+.github/
+.git/
+
+# Package manager
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Misc
+.DS_Store
+*.tgz

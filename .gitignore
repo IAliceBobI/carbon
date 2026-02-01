@@ -16,3 +16,6 @@ website/.source
 website/public/*.txt
 .idea/
 .worktrees/
+*.tgz
+.claude/ralph-loop.local.md
+
